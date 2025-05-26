@@ -8,9 +8,14 @@ import { Link, Outlet } from "react-router-dom";
 // import Reveal from "./components/animation/reveal";
 import { SearchIcon } from "lucide-react";
 import NavLink from "./components/link/link";
+import { useEffect } from "react";
 
 function App() {
 
+  useEffect(() => {
+  
+      localStorage.setItem('Token', '3d43a067e8a84c40a405cb1eb00306cc5b5affb6'); // Set your token here
+    } )
 
   return (
     <ThemeProvider defaultTheme="light" storageKey="vite-ui-theme">

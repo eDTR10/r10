@@ -12,6 +12,8 @@ import axios from './../plugin/axios';
 const AdminDashboard: React.FC = () => {
   const [data, setData] = React.useState<any>([]);
 
+  
+
   function getUsers() {
 
   axios.get('users/all/',

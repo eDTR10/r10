@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Edit, Trash2, Eye, User } from 'lucide-react';
 import { accessLevelLabels, accessLevelColors } from '../../data/users';
 import axios from 'axios';
+import Swal from 'sweetalert2';
 // Import shadcn dialog components
 import {
   Dialog,
@@ -14,13 +15,58 @@ import {
   DialogClose,
 } from "@/components/ui/dialog";
 import { useUsers } from '@/context/UserContext';
+import { Switch } from "@/components/ui/switch"; // shadcn/ui switch, or use your own
 
 const UserTable = ({ data, getUsers }: any) => {
-   const {  openEditModal } = useUsers();
+  const { openEditModal } = useUsers();
   const [selectedUser, setSelectedUser] = useState<any>(null);
   const [showDetails, setShowDetails] = useState(false);
   const [showDelete, setShowDelete] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [updatingActive, setUpdatingActive] = useState<number | null>(null);
+
+  // Function to update is_active status with confirmation and success message
+  async function handleToggleActive(user: any) {
+    // Show confirmation dialog
+    const action = user.is_active ? 'deactivate' : 'activate';
+    const confirmResult = await Swal.fire({
+      title: `${user.is_active ? 'Deactivate' : 'Activate'} Account?`,
+      text: `Are you sure you want to ${action} the account for ${user.first_name} ${user.last_name}?`,
+      icon: 'question',
+      showCancelButton: true,
+      confirmButtonText: `Yes, ${action}`,
+      cancelButtonText: 'Cancel'
+    });
+
+    if (!confirmResult.isConfirmed) return;
+
+    setUpdatingActive(user.id);
+    try {
+      await axios.put(`users/update/${user.id}/`, {
+        is_active: !user.is_active,
+      }, {
+        headers: {
+          Authorization: `Token ${localStorage.getItem('Token')}`,
+        },
+      });
+      getUsers();
+      await Swal.fire({
+        icon: 'success',
+        title: `Account ${user.is_active ? 'deactivated' : 'activated'}!`,
+        text: `The account for ${user.first_name} ${user.last_name} has been ${user.is_active ? 'deactivated' : 'activated'}.`,
+        timer: 1800,
+        showConfirmButton: false,
+      });
+    } catch (error) {
+      Swal.fire({
+        icon: 'error',
+        title: 'Error',
+        text: 'There was a problem updating the account status.',
+      });
+    } finally {
+      setUpdatingActive(null);
+    }
+  }
 
   function handleDeleteUser(id: any) {
     setDeleting(true);
@@ -54,6 +100,7 @@ const UserTable = ({ data, getUsers }: any) => {
               <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Project</th>
               <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Designation</th>
               <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Access Level</th>
+              <th className="px-6 py-3 text-center text-xs font-semibold text-gray-500 uppercase tracking-wider">Active</th>
               <th className="px-6 py-3 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider">Actions</th>
             </tr>
           </thead>
@@ -89,6 +136,13 @@ const UserTable = ({ data, getUsers }: any) => {
                     <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold ${accessLevelColors[user.acc_lvl]}`}>
                       {accessLevelLabels[user.acc_lvl] || `Level ${user.acc_lvl}`}
                     </span>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-center">
+                    <Switch
+                      checked={user.is_active}
+                      onCheckedChange={() => handleToggleActive(user)}
+                      disabled={updatingActive === user.id}
+                    />
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                     <div className="flex items-center justify-end space-x-2">
@@ -207,7 +261,7 @@ const UserTable = ({ data, getUsers }: any) => {
               ))
             ) : (
               <tr>
-                <td colSpan={6} className="px-6 py-4 text-center text-gray-500">
+                <td colSpan={7} className="px-6 py-4 text-center text-gray-500">
                   No users found matching your search criteria.
                 </td>
               </tr>
