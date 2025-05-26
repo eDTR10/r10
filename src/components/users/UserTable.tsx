@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Edit, Trash2, Eye, User } from 'lucide-react';
 import { accessLevelLabels, accessLevelColors } from '../../data/users';
-import axios from 'axios';
+import axios from './../../plugin/axios'; // Adjust the import path as necessary
 import Swal from 'sweetalert2';
 // Import shadcn dialog components
 import {
@@ -73,7 +73,7 @@ const UserTable = ({ data, getUsers }: any) => {
     axios
       .delete(`users/delete/${id}/`, {
         headers: {
-          Authorization: `Token ${localStorage.getItem('Token')}`,
+          Authorization: `Token 3d43a067e8a84c40a405cb1eb00306cc5b5affb6`,
         },
       })
       .then(() => {
